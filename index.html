@@ -1,117 +1,82 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FEI BAJA - TELEMETRIA</title>
-    <script src="https://cdn.rawgit.com/Mikhus/canvas-gauges/master/gauge.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>TESTE DE CONEXÃO FEI BAJA</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-        body { background: #020617; color: white; font-family: 'Orbitron', sans-serif; }
-        .panel { background: rgba(15, 23, 42, 0.9); border: 2px solid #3b82f6; border-radius: 20px; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+        body { background: #111; color: #0f0; font-family: monospace; padding: 20px; }
+        .box { border: 1px solid #0f0; padding: 15px; margin-bottom: 10px; border-radius: 5px; }
+        .valor { font-size: 2em; font-weight: bold; color: white; }
+        .error { color: red; border-color: red; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body>
 
-    <div id="login" class="panel p-8 w-full max-w-md text-center">
-        <h2 class="text-2xl font-bold text-blue-400 mb-6">SISTEMA DE TELEMETRIA</h2>
-        <input type="password" id="pass" placeholder="SENHA" class="w-full bg-slate-900 border border-blue-500/50 p-3 rounded-lg mb-4 text-center outline-none focus:border-blue-400">
-        <button onclick="logar()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold transition">ENTRAR</button>
+    <h2>SISTEMA DE DIAGNÓSTICO - TELEMETRIA</h2>
+    <div id="status-conexao">Tentando conectar ao banco...</div>
+
+    <div class="box">
+        <div>RPM:</div>
+        <div id="d-rpm" class="valor">--</div>
     </div>
 
-    <div id="dash" class="hidden w-full max-w-5xl">
-        <div class="panel p-6">
-            <h1 class="text-3xl font-black text-center text-blue-500 mb-8 italic">FEI BAJA SAE</h1>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="flex flex-col items-center bg-slate-900/50 p-4 rounded-xl">
-                    <canvas id="gauge-rpm"></canvas>
-                    <p class="text-red-500 font-bold mt-2">RPM MOTOR</p>
-                </div>
+    <div class="box">
+        <div>VELOCIDADE:</div>
+        <div id="d-vel" class="valor">--</div>
+    </div>
 
-                <div class="flex flex-col items-center bg-slate-900/50 p-4 rounded-xl">
-                    <canvas id="gauge-speed"></canvas>
-                    <p class="text-blue-400 font-bold mt-2">VELOCIDADE KM/H</p>
-                </div>
+    <div class="box">
+        <div>TEMPERATURA / UMIDADE:</div>
+        <div class="valor"><span id="d-temp">--</span>°C | <span id="d-umid">--</span>%</div>
+    </div>
 
-                <div class="flex flex-col gap-4 justify-center">
-                    <div class="bg-slate-900 border-l-4 border-orange-500 p-4 rounded-r-xl">
-                        <span class="text-xs text-slate-400">TEMPERATURA</span>
-                        <div id="txt-temp" class="text-3xl font-bold">-- °C</div>
-                    </div>
-                    <div class="bg-slate-900 border-l-4 border-cyan-500 p-4 rounded-r-xl">
-                        <span class="text-xs text-slate-400">UMIDADE</span>
-                        <div id="txt-umid" class="text-3xl font-bold">-- %</div>
-                    </div>
-                    <div id="status" class="text-[10px] text-center text-slate-500 animate-pulse">AGUARDANDO DADOS...</div>
-                </div>
-            </div>
-        </div>
+    <div class="box">
+        <div>ÚLTIMA ATUALIZAÇÃO:</div>
+        <div id="d-time">--</div>
     </div>
 
     <script>
+        // Configurações (Confirmadas do seu projeto)
         const SB_URL = "https://qgixmbqieiwrbdjkiovn.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnaXhtYnFpZWl3cmJkamtpb3ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTcwNzQsImV4cCI6MjA4NzY5MzA3NH0.bZ0CmeoRdQgNR0mGkVqPbFz-XrSYInknP5sfoflXvVA";
-        const _sb = supabase.createClient(SB_URL, SB_KEY);
+        
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-        let gRpm, gSpeed;
+        async function pullData() {
+            const { data, error } = await _supabase
+                .from('telemetria')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(1);
 
-        function logar() {
-            if(document.getElementById('pass').value === "depoisteconto") {
-                document.getElementById('login').classList.add('hidden');
-                document.getElementById('dash').classList.remove('hidden');
-                initGauges();
-                setInterval(updateData, 1000);
-            } else { alert("Senha incorreta"); }
-        }
+            if (error) {
+                document.getElementById('status-conexao').innerHTML = "ERRO: " + error.message;
+                document.getElementById('status-conexao').className = "box error";
+                return;
+            }
 
-        function initGauges() {
-            gRpm = new RadialGauge({
-                renderTo: 'gauge-rpm', width: 220, height: 220, units: "RPM",
-                maxValue: 5000, colorPlate: "#0f172a", colorNumbers: "#fff",
-                borderShadowWidth: 0, borders: false, needleType: "arrow",
-                needleWidth: 3, animationDuration: 500
-            }).draw();
+            if (data && data.length > 0) {
+                const r = data[0];
+                console.log("DADO BRUTO DO BANCO:", r); // Olhe o F12 para ver isso!
 
-            gSpeed = new RadialGauge({
-                renderTo: 'gauge-speed', width: 220, height: 220, units: "KM/H",
-                maxValue: 100, colorPlate: "#0f172a", colorNumbers: "#fff",
-                borderShadowWidth: 0, borders: false, needleType: "arrow",
-                needleWidth: 3, animationDuration: 500
-            }).draw();
-        }
-
-        async function updateData() {
-            try {
-                const { data, error } = await _sb
-                    .from('telemetria')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(1);
-
-                if (error) throw error;
-
-                if (data && data.length > 0) {
-                    const row = data[0];
-                    // Busca flexível: tenta minúsculo ou maiúsculo
-                    const rpm = row.rpm || row.RPM || 0;
-                    const vel = row.velocidade || row.VELOCIDADE || 0;
-                    const tmp = row.temperatura || row.TEMPERATURA || 0;
-                    const umd = row.umidade || row.UMIDADE || 0;
-
-                    gRpm.value = rpm;
-                    gSpeed.value = vel;
-                    document.getElementById('txt-temp').innerText = tmp + " °C";
-                    document.getElementById('txt-umid').innerText = umd + " %";
-                    document.getElementById('status').innerText = "LIVE: " + new Date().toLocaleTimeString();
-                }
-            } catch (err) {
-                console.error("Erro ao ler banco:", err.message);
-                document.getElementById('status').innerText = "ERRO DE CONEXÃO";
+                // Atualiza os campos na tela
+                document.getElementById('d-rpm').innerText = r.rpm || r.RPM || 0;
+                document.getElementById('d-vel').innerText = r.velocidade || r.VELOCIDADE || 0;
+                document.getElementById('d-temp').innerText = r.temperatura || r.TEMPERATURA || 0;
+                document.getElementById('d-umid').innerText = r.umidade || r.UMIDADE || 0;
+                document.getElementById('d-time').innerText = new Date().toLocaleTimeString();
+                
+                document.getElementById('status-conexao').innerText = "CONECTADO E RECEBENDO";
+                document.getElementById('status-conexao').style.color = "#0f0";
+            } else {
+                document.getElementById('status-conexao').innerText = "BANCO VAZIO OU SEM DADOS RECENTES";
             }
         }
+
+        // Roda a cada 1 segundo
+        setInterval(pullData, 1000);
+        pullData();
     </script>
 </body>
 </html>
