@@ -2,7 +2,6 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FEI BAJA SAE - TELEMETRIA</title>
     <script src="https://cdn.rawgit.com/Mikhus/canvas-gauges/master/gauge.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -10,187 +9,106 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
-        body { 
-            background: #000510 url('https://www.transparenttextures.com/patterns/stardust.png');
-            color: white; font-family: 'Orbitron', sans-serif; margin: 0;
-            min-height: 100vh; display: flex; align-items: center; justify-content: center;
-        }
-        .star-red { color: #ff0000; text-shadow: 0 0 15px #ff0000, 0 0 30px #ff0000; animation: shine 1.5s infinite alternate; }
-        .star-yellow { color: #ffcc00; text-shadow: 0 0 10px #ffcc00, 0 0 20px #ffcc00; animation: shine 2s infinite alternate; }
-        @keyframes shine { from { opacity: 0.6; transform: scale(0.9); } to { opacity: 1; transform: scale(1.1); } }
-        #saboiaOverlay { display: none; position: fixed; inset: 0; z-index: 500; background: black; align-items: center; justify-content: center; }
-        .saboia-text { font-size: 5rem; font-weight: 900; color: #0096ff; text-shadow: 0 0 40px #0096ff; animation: saboiaAnim 1s ease-in-out forwards; }
-        @keyframes saboiaAnim { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
-        .glass-panel {
-            background: rgba(10, 20, 40, 0.95);
-            backdrop-filter: blur(10px);
-            border: 3px solid #0096ff;
-            border-radius: 30px;
-            box-shadow: 0 0 40px rgba(0, 150, 255, 0.4);
-            padding: 20px;
-        }
-        .gauge-container { background: radial-gradient(circle, #0a0f1d 0%, #000 100%); border-radius: 50%; padding: 5px; }
-        .tab-btn { padding: 12px 18px; color: #64748b; font-size: 11px; border-bottom: 2px solid transparent; transition: 0.3s; }
-        .tab-active { color: #0096ff; border-bottom-color: #0096ff; background: rgba(0, 150, 255, 0.1); }
-        .sub-tab-btn { padding: 8px 15px; font-size: 9px; border: 1px solid #1e293b; border-radius: 5px; color: #64748b; }
-        .sub-active { border-color: #0096ff; color: #0096ff; background: rgba(0,150,255,0.1); }
+        body { background: #000510; color: white; font-family: 'Orbitron', sans-serif; }
+        .glass-panel { background: rgba(10, 20, 40, 0.95); border: 3px solid #0096ff; border-radius: 30px; padding: 20px; }
         .hidden { display: none !important; }
     </style>
 </head>
-<body>
+<body class="flex items-center justify-center min-height-screen p-10">
 
-    <div id="saboiaOverlay"><div class="saboia-text italic">SABOIA</div></div>
-
-    <div id="loginWrapper" class="flex flex-col items-center">
-        <div class="glass-panel p-10 w-85 text-center flex flex-col items-center">
-            <div class="flex gap-4 mb-6"><span class="star-red text-4xl">★</span><span class="star-red text-4xl">★</span><span class="star-red text-4xl">★</span><span class="star-red text-4xl">★</span></div>
-            <div class="w-32 h-32 rounded-full border-4 border-yellow-500 overflow-hidden mb-4">
-                <img src="https://media.tenor.com/w3VAxiGVd_MAAAAM/kapibara-%D0%BA%20%D0%B0%D0%BF%D0%B8%D0%B1%D0%B0%D1%80%D0%B0.gif" class="w-full h-full object-cover">
-            </div>
-            <h2 class="text-blue-400 mb-4 font-black tracking-widest">ELETRICA</h2>
-            <input type="password" id="password" placeholder="SENHA" class="w-full bg-black/50 border border-blue-500/30 p-4 rounded-xl text-center outline-none mb-6">
-            <button onclick="fazerLogin()" class="w-full bg-blue-600 py-4 rounded-xl font-black shadow-lg shadow-blue-500/20">ENTRAR</button>
-        </div>
+    <div id="loginWrapper" class="glass-panel p-10 text-center">
+        <h2 class="text-blue-400 mb-6 font-black uppercase">Painel de Acesso</h2>
+        <input type="password" id="password" placeholder="SENHA" class="bg-black border border-blue-500 p-4 rounded-xl text-center mb-6 block w-full">
+        <button onclick="fazerLogin()" class="bg-blue-600 px-10 py-4 rounded-xl font-black w-full">ENTRAR</button>
     </div>
 
-    <div id="telemetryWrapper" class="hidden w-full max-w-6xl px-4">
-        <div class="telemetry-content glass-panel">
-            <header class="flex flex-col items-center mb-8">
-                <h1 class="text-4xl font-black italic text-blue-500 tracking-tighter">EQUIPE FEI BAJA SAE</h1>
-                <div class="flex gap-2 mt-4">
-                    <span class="star-yellow">★</span><span class="star-yellow">★</span><span class="star-yellow">★</span><span class="star-yellow">★</span><span class="star-yellow">★</span>
-                </div>
-            </header>
-
-            <nav class="flex bg-black/40 border-y border-white/5 mx-[-20px]">
-                <button onclick="switchTab('live')" class="tab-btn tab-active font-black" id="tab-live">LIVE DATA</button>
-                <button onclick="switchTab('charts')" class="tab-btn font-black" id="tab-charts">ANÁLISE GRÁFICA</button>
-                <div class="ml-auto p-2 pr-6">
-                    <button id="btnStart" onclick="startRec()" class="bg-green-600 px-6 py-2 rounded-lg text-[10px] font-black">GRAVAR</button>
-                    <button id="btnStop" onclick="openSave()" class="bg-red-600 px-6 py-2 rounded-lg text-[10px] font-black hidden animate-pulse">PARAR</button>
-                </div>
-            </nav>
-
-            <div id="cont-live" class="p-8 grid grid-cols-3 gap-8">
-                <div class="flex flex-col items-center">
-                    <div class="gauge-container"><canvas id="rpm-gauge"></canvas></div>
-                    <p class="text-red-500 text-[10px] mt-4 font-bold">ENGINE RPM</p>
-                </div>
-                <div class="flex flex-col items-center">
-                    <div class="gauge-container"><canvas id="speed-gauge"></canvas></div>
-                    <p class="text-blue-400 text-[10px] mt-4 font-bold">SPEED KM/H</p>
-                </div>
-                <div class="flex flex-col gap-6 justify-center">
-                    <div class="bg-black/60 p-6 border-l-4 border-red-600 rounded-xl">
-                        <p class="text-[9px] text-gray-500">TEMP. MOTOR</p>
-                        <h3 id="v-motor" class="text-4xl font-black">0°C</h3>
+    <div id="telemetryWrapper" class="hidden w-full max-w-6xl">
+        <div class="glass-panel">
+            <h1 class="text-center text-3xl font-black text-blue-500 mb-8 italic">TELEMETRIA REAL-TIME</h1>
+            
+            <div class="grid grid-cols-3 gap-8 p-4">
+                <div class="text-center"><canvas id="rpm-gauge"></canvas><p class="mt-2 text-red-500">RPM</p></div>
+                <div class="text-center"><canvas id="speed-gauge"></canvas><p class="mt-2 text-blue-400">KM/H</p></div>
+                <div class="flex flex-col gap-4">
+                    <div class="bg-black/50 p-4 rounded-xl border-l-4 border-red-600">
+                        <p class="text-xs text-gray-400">TEMPERATURA</p>
+                        <h3 id="v-motor" class="text-3xl font-black">0°C</h3>
                     </div>
-                    <div class="bg-black/60 p-6 border-l-4 border-blue-500 rounded-xl">
-                        <p class="text-[9px] text-gray-500">UMIDADE</p>
-                        <h3 id="v-umid" class="text-4xl font-black">0%</h3>
+                    <div class="bg-black/50 p-4 rounded-xl border-l-4 border-blue-500">
+                        <p class="text-xs text-gray-400">UMIDADE</p>
+                        <h3 id="v-umid" class="text-3xl font-black">0%</h3>
                     </div>
                 </div>
             </div>
 
-            <div id="cont-charts" class="hidden p-8">
-                <div class="flex gap-4 mb-8 justify-center">
-                    <button onclick="switchSubChart('s')" class="sub-tab-btn sub-active" id="sub-s">VELOCIDADE</button>
-                    <button onclick="switchSubChart('r')" class="sub-tab-btn" id="sub-r">RPM</button>
-                </div>
-                <div id="box-s" class="h-80"><canvas id="cSpeed"></canvas></div>
-                <div id="box-r" class="hidden h-80"><canvas id="cRpm"></canvas></div>
+            <div class="p-4">
+                <button id="btnStart" onclick="isRec=true; this.classList.add('hidden')" class="bg-green-600 p-2 rounded w-full font-bold">INICIAR GRÁFICOS</button>
+                <div class="h-64 mt-4"><canvas id="cSpeed"></canvas></div>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURAÇÕES SUPABASE
         const SUPABASE_URL = "https://qgixmbqieiwrbdjkiovn.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnaXhtYnFpZWl3cmJkamtpb3ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTcwNzQsImV4cCI6MjA4NzY5MzA3NH0.bZ0CmeoRdQgNR0mGkVqPbFz-XrSYInknP5sfoflXvVA";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const PASS = "depoisteconto";
-        let rpmG, speedG, chartS, chartR, isRec = false;
+        let rpmG, speedG, chartS, isRec = false;
 
         function fazerLogin() {
-            if(document.getElementById('password').value === PASS) {
+            if(document.getElementById('password').value === "depoisteconto") {
                 document.getElementById('loginWrapper').classList.add('hidden');
-                document.getElementById('saboiaOverlay').style.display = 'flex';
-                setTimeout(() => { 
-                    document.getElementById('saboiaOverlay').style.display = 'none'; 
-                    document.getElementById('telemetryWrapper').classList.remove('hidden'); 
-                    initDash(); 
-                }, 1000);
-            } else { alert("Senha incorreta"); }
+                document.getElementById('telemetryWrapper').classList.remove('hidden');
+                initDash();
+            } else { alert("Senha errada"); }
         }
 
         function initDash() {
-            // Inicializa Ponteiros
-            const common = { width: 250, height: 250, colorPlate: "transparent", colorNumbers: "#fff", fontNumbers: "Orbitron", valueBox: true, colorValueBoxBackground: "transparent" };
-            rpmG = new RadialGauge({ ...common, renderTo: 'rpm-gauge', units: "RPM", maxValue: 5000, colorNeedle: "#f00" }).draw();
-            speedG = new RadialGauge({ ...common, renderTo: 'speed-gauge', units: "KM/H", maxValue: 100, colorNeedle: "#00b4ff" }).draw();
-
-            // Inicializa Gráficos com Eixo X (Tempo) visível
-            const cConfig = (id, col) => new Chart(document.getElementById(id), {
+            rpmG = new RadialGauge({ renderTo: 'rpm-gauge', width: 200, height: 200, maxValue: 5000, units: "RPM" }).draw();
+            speedG = new RadialGauge({ renderTo: 'speed-gauge', width: 200, height: 200, maxValue: 100, units: "KM/H" }).draw();
+            
+            chartS = new Chart(document.getElementById('cSpeed'), {
                 type: 'line',
-                data: { labels: [], datasets: [{ data: [], borderColor: col, backgroundColor: col+'15', fill: true }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: { 
-                        x: { display: true, ticks: { color: '#64748b' }, grid: { color: '#1a1a1a' } },
-                        y: { grid: { color: '#1a1a1a' } }
-                    }
-                }
+                data: { labels: [], datasets: [{ label: 'Velocidade', data: [], borderColor: '#0096ff' }] },
+                options: { scales: { x: { display: true, ticks: { color: '#fff' } } } }
             });
-            chartS = cConfig('cSpeed', '#00b4ff');
-            chartR = cConfig('cRpm', '#ff0000');
 
-            // Inicia busca de dados real
-            setInterval(fetchRealData, 1000);
+            setInterval(getData, 1000);
         }
 
-        async function fetchRealData() {
+        async function getData() {
             const { data, error } = await _supabase
                 .from('telemetria')
-                .select('rpm, velocidade, temperatura, umidade, created_at')
+                .select('*')
                 .order('created_at', { ascending: false })
                 .limit(1);
 
+            if (error) console.error("Erro no Supabase:", error);
+            
             if (data && data.length > 0) {
                 const b = data[0];
-                const timeStr = new Date(b.created_at).toLocaleTimeString('pt-BR');
+                console.log("Dados recebidos:", b); // Isso vai aparecer no F12
 
-                // Atualiza Ponteiros
-                rpmG.value = b.rpm;
-                speedG.value = b.velocidade;
-                document.getElementById('v-motor').innerText = b.temperatura + "°C";
-                document.getElementById('v-umid').innerText = b.umidade + "%";
+                // Se os seus nomes de coluna forem diferentes, mude aqui:
+                const r = b.rpm || 0;
+                const s = b.velocidade || 0;
+                const t = b.temperatura || 0;
+                const u = b.umidade || 0;
 
-                // Atualiza Gráficos se estiver gravando
+                rpmG.value = r;
+                speedG.value = s;
+                document.getElementById('v-motor').innerText = t + "°C";
+                document.getElementById('v-umid').innerText = u + "%";
+
                 if(isRec) {
-                    [chartS, chartR].forEach((c, i) => {
-                        const val = (i === 0) ? b.velocidade : b.rpm;
-                        c.data.labels.push(timeStr);
-                        c.data.datasets[0].data.push(val);
-                        if(c.data.labels.length > 20) { c.data.labels.shift(); c.data.datasets[0].data.shift(); }
-                        c.update('none');
-                    });
+                    const time = new Date().toLocaleTimeString();
+                    chartS.data.labels.push(time);
+                    chartS.data.datasets[0].data.push(s);
+                    if(chartS.data.labels.length > 15) { chartS.data.labels.shift(); chartS.data.datasets[0].data.shift(); }
+                    chartS.update();
                 }
             }
         }
-
-        function switchTab(t) {
-            ['live', 'charts'].forEach(id => { document.getElementById('cont-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.remove('tab-active'); });
-            document.getElementById('cont-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.add('tab-active');
-        }
-
-        function switchSubChart(sub) {
-            ['s', 'r'].forEach(id => { document.getElementById('box-'+id).classList.add('hidden'); document.getElementById('sub-'+id).classList.remove('sub-active'); });
-            document.getElementById('box-'+sub).classList.remove('hidden'); document.getElementById('sub-'+sub).classList.add('sub-active');
-        }
-
-        function startRec() { isRec = true; document.getElementById('btnStart').classList.add('hidden'); document.getElementById('btnStop').classList.remove('hidden'); }
-        function openSave() { isRec = false; alert("GRAVAÇÃO FINALIZADA!"); location.reload(); }
     </script>
 </body>
 </html>
