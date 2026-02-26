@@ -30,10 +30,10 @@
         .glass-panel {
             background: rgba(10, 20, 40, 0.95);
             backdrop-filter: blur(10px);
-            border: 3px solid #0096ff; /* Moldura azul claro */
+            border: 3px solid #0096ff;
             border-radius: 30px;
             box-shadow: 0 0 40px rgba(0, 150, 255, 0.4);
-            padding: 20px; /* Garante que nada saia da borda */
+            padding: 20px;
         }
 
         .gauge-container { background: radial-gradient(circle, #0a0f1d 0%, #000 100%); border-radius: 50%; padding: 5px; }
@@ -45,6 +45,27 @@
         .sub-active { border-color: #0096ff; color: #0096ff; background: rgba(0,150,255,0.1); }
 
         .hidden { display: none !important; }
+
+        /* Estilos para os botões de fonte de dados */
+        .data-source-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .data-source-active {
+            background-color: #10b981;
+            color: white;
+            box-shadow: 0 0 15px #10b981;
+        }
+        .data-source-inactive {
+            background-color: #ef4444;
+            color: white;
+            box-shadow: 0 0 15px #ef4444;
+        }
 
         @media (max-width: 768px) {
             .telemetry-content { min-width: 900px; }
@@ -102,6 +123,9 @@
                 <button onclick="switchTab('charts')" class="tab-btn font-black" id="tab-charts">ANÁLISE GRÁFICA</button>
                 <button onclick="switchTab('gps')" class="tab-btn font-black" id="tab-gps">GPS TRACKER</button>
                 <div class="ml-auto p-2 flex gap-2 pr-6">
+                    <!-- Botões de fonte de dados -->
+                    <button id="btnSimular" onclick="setDataSource('simular')" class="data-source-btn data-source-active">SIMULAR</button>
+                    <button id="btnSupabase" onclick="setDataSource('supabase')" class="data-source-btn data-source-inactive">SUPABASE</button>
                     <button id="btnStart" onclick="startRec()" class="bg-green-600 px-6 py-2 rounded-lg text-[10px] font-black">GRAVAR</button>
                     <button id="btnStop" onclick="openSave()" class="bg-red-600 px-6 py-2 rounded-lg text-[10px] font-black hidden animate-pulse">PARAR</button>
                 </div>
@@ -185,7 +209,8 @@
         const SUPABASE_URL = 'https://qgixmbqieiwrbdjkiovn.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnaXhtYnFpZWl3cmJkamtpb3ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTcwNzQsImV4cCI6MjA4NzY5MzA3NH0.bZ0CmeoRdQgNR0mGkVqPbFz-XrSYInknP5sfoflXvVA';
         
-        // Últimos dados recebidos
+        // Controle de fonte de dados
+        let dataSource = 'simular'; // 'simular' ou 'supabase'
         let lastData = { temperatura: 0, rpm: 0, velocidade: 0, umidade: 0 };
 
         function togglePass() { const p = document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password'; }
@@ -198,7 +223,25 @@
             } else { alert("Senha incorreta"); }
         }
 
+        function setDataSource(source) {
+            dataSource = source;
+            
+            // Atualiza estilos dos botões
+            const btnSimular = document.getElementById('btnSimular');
+            const btnSupabase = document.getElementById('btnSupabase');
+            
+            if (source === 'simular') {
+                btnSimular.className = 'data-source-btn data-source-active';
+                btnSupabase.className = 'data-source-btn data-source-inactive';
+            } else {
+                btnSimular.className = 'data-source-btn data-source-inactive';
+                btnSupabase.className = 'data-source-btn data-source-active';
+            }
+        }
+
         async function fetchLatestData() {
+            if (dataSource !== 'supabase') return;
+            
             try {
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/telemetria?order=id.desc&limit=1`, {
                     headers: {
@@ -211,7 +254,7 @@
                     const data = await response.json();
                     if (data && data.length > 0) {
                         lastData = data[0];
-                        console.log('Dados recebidos:', lastData);
+                        console.log('Dados do Supabase:', lastData);
                     }
                 } else {
                     console.error('Erro ao buscar dados:', response.status);
@@ -219,6 +262,13 @@
             } catch (error) {
                 console.error('Erro na conexão:', error);
             }
+        }
+
+        function generateSimulatedData() {
+            const r = Math.floor(Math.random() * 3000 + 1000);
+            const s = Math.floor(r / 60 + Math.random() * 5);
+            const t = Math.floor(Math.random() * 15 + 85);
+            return { rpm: r, velocidade: s, temperatura: t };
         }
 
         function initDash() {
@@ -232,32 +282,44 @@
             });
             chartS = cConfig('cSpeed', '#00b4ff'); chartR = cConfig('cRpm', '#ff0000'); chartT = cConfig('cTemp', '#ffcc00');
             
-            // Busca dados a cada 3 segundos (mesmo intervalo do ESP32)
+            // Busca dados do Supabase a cada 3 segundos
             setInterval(fetchLatestData, 3000);
             // Atualiza a interface a cada 800ms
             setInterval(updateDisplay, 800);
         }
 
         function updateDisplay() {
-            const r = lastData.rpm || 0;
-            const s = lastData.velocidade || 0;
-            const t = lastData.temperatura || 0;
-            const h = lastData.umidade || 0;
+            let r, s, t;
+            
+            if (dataSource === 'simular') {
+                const simData = generateSimulatedData();
+                r = simData.rpm;
+                s = simData.velocidade;
+                t = simData.temperatura;
+            } else {
+                r = lastData.rpm || 0;
+                s = lastData.velocidade || 0;
+                t = lastData.temperatura || 0;
+            }
             
             rpmG.value = r;
             speedG.value = s;
-            document.getElementById('v-motor').innerText = Math.round(t)+"°C";
-            document.getElementById('v-cvt').innerText = Math.round(t - 12)+"°C";
+            document.getElementById('v-motor').innerText = Math.round(t) + "°C";
+            document.getElementById('v-cvt').innerText = Math.round(t - 12) + "°C";
 
-            if(isRec) {
+            if (isRec) {
                 const now = new Date().toLocaleTimeString();
                 [chartS, chartR, chartT].forEach((c, i) => {
                     c.data.labels.push(now); 
-                    c.data.datasets[0].data.push(i==0?s:i==1?r:t);
-                    if(c.data.labels.length>25) { c.data.labels.shift(); c.data.datasets[0].data.shift(); }
+                    c.data.datasets[0].data.push(i == 0 ? s : i == 1 ? r : t);
+                    if (c.data.labels.length > 25) { 
+                        c.data.labels.shift(); 
+                        c.data.datasets[0].data.shift(); 
+                    }
                     c.update('none');
                 });
-                dTotal += s * 0.0001; if(s > vMax) vMax = s;
+                dTotal += s * 0.0001; 
+                if (s > vMax) vMax = s;
                 document.getElementById('g-dist').innerText = dTotal.toFixed(2) + " KM";
                 document.getElementById('g-max').innerText = vMax + " KM/H";
                 drawMap();
@@ -266,42 +328,59 @@
 
         function drawMap() {
             const c = document.getElementById('gpsMap'); const ctx = c.getContext('2d');
-            if(track.length==0) { c.width = c.offsetWidth; c.height = c.offsetHeight; track.push({x:50, y:c.height/2}); }
-            let last = track[track.length-1];
-            track.push({x: last.x + 6, y: last.y + (Math.random()*12-6)});
+            if (track.length == 0) { 
+                c.width = c.offsetWidth; 
+                c.height = c.offsetHeight; 
+                track.push({ x: 50, y: c.height / 2 }); 
+            }
+            let last = track[track.length - 1];
+            track.push({ x: last.x + 6, y: last.y + (Math.random() * 12 - 6) });
             ctx.strokeStyle = '#00b4ff'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath();
             ctx.moveTo(track[0].x, track[0].y); track.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
         }
 
         function switchTab(t) {
-            ['live', 'charts', 'gps'].forEach(id => { document.getElementById('cont-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.remove('tab-active'); });
-            document.getElementById('cont-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.add('tab-active');
+            ['live', 'charts', 'gps'].forEach(id => { 
+                document.getElementById('cont-' + id).classList.add('hidden'); 
+                document.getElementById('tab-' + id).classList.remove('tab-active'); 
+            });
+            document.getElementById('cont-' + t).classList.remove('hidden'); 
+            document.getElementById('tab-' + t).classList.add('tab-active');
         }
 
         function switchSubChart(sub) {
-            ['s', 'r', 't'].forEach(id => { document.getElementById('box-'+id).classList.add('hidden'); document.getElementById('sub-'+id).classList.remove('sub-active'); });
-            document.getElementById('box-'+sub).classList.remove('hidden'); document.getElementById('sub-'+sub).classList.add('sub-active');
+            ['s', 'r', 't'].forEach(id => { 
+                document.getElementById('box-' + id).classList.add('hidden'); 
+                document.getElementById('sub-' + id).classList.remove('sub-active'); 
+            });
+            document.getElementById('box-' + sub).classList.remove('hidden'); 
+            document.getElementById('sub-' + sub).classList.add('sub-active');
         }
 
-        function startRec() { isRec = true; document.getElementById('btnStart').classList.add('hidden'); document.getElementById('btnStop').classList.remove('hidden'); dTotal=0; vMax=0; track=[]; }
-        function openSave() { document.getElementById('saveModal').classList.remove('hidden'); }
-        function discard() { isRec = false; document.getElementById('saveModal').classList.add('hidden'); document.getElementById('btnStop').classList.add('hidden'); document.getElementById('btnStart').classList.remove('hidden'); }
+        function startRec() { 
+            isRec = true; 
+            document.getElementById('btnStart').classList.add('hidden'); 
+            document.getElementById('btnStop').classList.remove('hidden'); 
+            dTotal = 0; 
+            vMax = 0; 
+            track = []; 
+        }
+        
+        function openSave() { 
+            document.getElementById('saveModal').classList.remove('hidden'); 
+        }
+        
+        function discard() { 
+            isRec = false; 
+            document.getElementById('saveModal').classList.add('hidden'); 
+            document.getElementById('btnStop').classList.add('hidden'); 
+            document.getElementById('btnStart').classList.remove('hidden'); 
+        }
+        
         function confirmS() { 
-            const sessionData = {
-                nome: document.getElementById('fname').value,
-                piloto: document.getElementById('fpilot').value,
-                pista: document.getElementById('ftrack').value,
-                distancia: dTotal,
-                velocidade_max: vMax,
-                dados: track
-            };
-            console.log('Sessão salva:', sessionData);
-            alert("REGISTRO SALVO!");
+            alert("REGISTRO SALVO!"); 
             discard(); 
         }
-
-        // Busca dados iniciais
-        fetchLatestData();
     </script>
 </body>
 </html>
