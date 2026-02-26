@@ -26,7 +26,6 @@
         .saboia-text { font-size: 5rem; font-weight: 900; color: #0096ff; text-shadow: 0 0 40px #0096ff; animation: saboiaAnim 1s ease-in-out forwards; }
         @keyframes saboiaAnim { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
 
-        /* PAINEL PRINCIPAL */
         .glass-panel {
             background: rgba(10, 20, 40, 0.95);
             backdrop-filter: blur(10px);
@@ -41,15 +40,10 @@
         .tab-btn { padding: 12px 18px; color: #64748b; font-size: 11px; border-bottom: 2px solid transparent; transition: 0.3s; }
         .tab-active { color: #0096ff; border-bottom-color: #0096ff; background: rgba(0, 150, 255, 0.1); }
         
-        .sub-tab-btn { padding: 8px 15px; font-size: 9px; border: 1px solid #1e293b; border-radius: 5px; color: #64748b; }
-        .sub-active { border-color: #0096ff; color: #0096ff; background: rgba(0,150,255,0.1); }
-
         .hidden { display: none !important; }
 
-        @media (max-width: 768px) {
-            .telemetry-content { min-width: 900px; }
-            .scroll-wrapper { overflow-x: auto; width: 100%; display: block; }
-        }
+        #historyList::-webkit-scrollbar { width: 6px; }
+        #historyList::-webkit-scrollbar-thumb { background: #0096ff; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -59,48 +53,33 @@
     <div id="loginWrapper" class="flex flex-col items-center">
         <div class="glass-panel p-10 w-85 text-center flex flex-col items-center">
             <div class="flex gap-4 mb-6"><span class="star-red text-4xl">★</span><span class="star-red text-4xl">★</span><span class="star-red text-4xl">★</span><span class="star-red text-4xl">★</span></div>
-            
             <div class="w-32 h-32 rounded-full border-4 border-yellow-500 overflow-hidden mb-4">
                 <img src="https://media.tenor.com/w3VAxiGVd_MAAAAM/kapibara-%D0%BA%20%D0%B0%D0%BF%D0%B8%D0%B1%D0%B0%D1%80%D0%B0.gif" class="w-full h-full object-cover">
             </div>
-            
-            <div class="flex justify-center gap-1 mb-6 text-xl">
-                <span class="star-yellow">★</span><span class="star-yellow">★</span><span class="star-yellow">★</span><span class="star-yellow">★</span><span class="star-yellow">★</span>
-                <span class="star-yellow">★</span><span class="star-yellow">★</span><span class="star-yellow">★</span><span class="star-yellow">★</span><span class="star-yellow">★</span>
-            </div>
-            
             <h2 class="text-blue-400 mb-4 font-black tracking-widest">ELETRICA</h2>
             <div class="relative w-full mb-6">
                 <input type="password" id="password" placeholder="SENHA" class="w-full bg-black/50 border border-blue-500/30 p-4 rounded-xl text-center outline-none focus:border-blue-500">
-                <button onclick="togglePass()" class="absolute right-4 top-4 text-[10px] text-blue-500 font-bold uppercase">Ver</button>
             </div>
             <button onclick="fazerLogin()" class="w-full bg-blue-600 py-4 rounded-xl font-black hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">ENTRAR</button>
             <p class="text-yellow-500 text-[10px] font-bold mt-8 uppercase tracking-[0.4em]">Feito por um príncipe 👑</p>
         </div>
     </div>
 
-    <div id="telemetryWrapper" class="hidden w-full max-w-6xl scroll-wrapper px-4">
+    <div id="telemetryWrapper" class="hidden w-full max-w-6xl px-4">
         <div class="telemetry-content glass-panel">
             
             <header class="flex flex-col items-center mb-8">
-                <div class="flex gap-4 mb-4"><span class="star-red text-4xl">★</span><span class="star-red text-4xl">★</span><span class="star-red text-4xl">★</span><span class="star-red text-4xl">★</span></div>
-                
-                <div class="flex justify-between items-center w-full px-4">
-                    <div class="w-20"></div>
-                    <h1 class="text-4xl font-black italic text-blue-500 tracking-tighter">EQUIPE FEI BAJA SAE</h1>
-                    <button onclick="location.reload()" class="text-red-500 border border-red-500 px-4 py-1 rounded-lg text-[10px] font-black uppercase hover:bg-red-500 hover:text-white transition">Logout</button>
-                </div>
-
-                <div class="flex gap-2 mt-6">
-                    <span class="star-yellow text-xl">★</span><span class="star-yellow text-xl">★</span><span class="star-yellow text-xl">★</span><span class="star-yellow text-xl">★</span><span class="star-yellow text-xl">★</span>
-                    <span class="star-yellow text-xl">★</span><span class="star-yellow text-xl">★</span><span class="star-yellow text-xl">★</span><span class="star-yellow text-xl">★</span><span class="star-yellow text-xl">★</span>
+                <h1 class="text-4xl font-black italic text-blue-500 tracking-tighter">EQUIPE FEI BAJA SAE</h1>
+                <div class="flex gap-2 mt-2">
+                    <span class="star-yellow text-xl">★</span><span class="star-yellow text-xl">★</span><span class="star-yellow text-xl">★</span>
                 </div>
             </header>
 
             <nav class="flex bg-black/40 border-y border-white/5 mx-[-20px]">
                 <button onclick="switchTab('live')" class="tab-btn tab-active font-black" id="tab-live">LIVE DATA</button>
-                <button onclick="switchTab('charts')" class="tab-btn font-black" id="tab-charts">ANÁLISE GRÁFICA</button>
+                <button onclick="switchTab('charts')" class="tab-btn font-black" id="tab-charts">GRÁFICOS</button>
                 <button onclick="switchTab('gps')" class="tab-btn font-black" id="tab-gps">GPS TRACKER</button>
+                <button onclick="switchTab('history')" class="tab-btn font-black" id="tab-history">HISTÓRICO</button>
                 <div class="ml-auto p-2 flex gap-2 pr-6">
                     <button id="btnStart" onclick="startRec()" class="bg-green-600 px-6 py-2 rounded-lg text-[10px] font-black">GRAVAR</button>
                     <button id="btnStop" onclick="openSave()" class="bg-red-600 px-6 py-2 rounded-lg text-[10px] font-black hidden animate-pulse">PARAR</button>
@@ -110,84 +89,86 @@
             <div id="cont-live" class="p-8 grid grid-cols-3 gap-8">
                 <div class="flex flex-col items-center">
                     <div class="gauge-container"><canvas id="rpm-gauge"></canvas></div>
-                    <p class="text-red-500 text-[10px] mt-4 tracking-[0.3em] font-bold">ENGINE RPM</p>
+                    <p class="text-red-500 text-[10px] mt-4 font-bold">ENGINE RPM</p>
                 </div>
                 <div class="flex flex-col items-center">
                     <div class="gauge-container"><canvas id="speed-gauge"></canvas></div>
-                    <p class="text-blue-400 text-[10px] mt-4 tracking-[0.3em] font-bold">SPEED KM/H</p>
+                    <p class="text-blue-400 text-[10px] mt-4 font-bold">SPEED KM/H</p>
                 </div>
                 <div class="flex flex-col gap-6 justify-center">
-                    <div class="bg-black/60 p-6 border-l-4 border-red-600 rounded-xl shadow-inner">
-                        <p class="text-[9px] text-gray-500 mb-1">TEMP. MOTOR</p>
+                    <div class="bg-black/60 p-6 border-l-4 border-red-600 rounded-xl">
+                        <p class="text-[9px] text-gray-500">TEMP. MOTOR</p>
                         <h3 id="v-motor" class="text-4xl font-black">0°C</h3>
                     </div>
-                    <div class="bg-black/60 p-6 border-l-4 border-blue-500 rounded-xl shadow-inner">
-                        <p class="text-[9px] text-gray-500 mb-1">TEMP. CVT</p>
+                    <div class="bg-black/60 p-6 border-l-4 border-blue-500 rounded-xl">
+                        <p class="text-[9px] text-gray-500">TEMP. CVT</p>
                         <h3 id="v-cvt" class="text-4xl font-black">0°C</h3>
                     </div>
                 </div>
             </div>
 
-            <div id="cont-charts" class="hidden p-8">
-                <div class="flex gap-4 mb-8 justify-center">
-                    <button onclick="switchSubChart('s')" class="sub-tab-btn sub-active font-black" id="sub-s">VELOCIDADE</button>
-                    <button onclick="switchSubChart('r')" class="sub-tab-btn font-black" id="sub-r">RPM MOTOR</button>
-                    <button onclick="switchSubChart('t')" class="sub-tab-btn font-black" id="sub-t">TEMPERATURA</button>
-                </div>
-                <div id="box-s" class="h-80 relative"><p class="text-xs text-blue-400 mb-4 italic">GRAPH: SPEED vs TIME</p><canvas id="cSpeed"></canvas></div>
-                <div id="box-r" class="hidden h-80 relative"><p class="text-xs text-red-500 mb-4 italic">GRAPH: RPM vs TIME</p><canvas id="cRpm"></canvas></div>
-                <div id="box-t" class="hidden h-80 relative"><p class="text-xs text-yellow-500 mb-4 italic">GRAPH: TEMPERATURE vs TIME</p><canvas id="cTemp"></canvas></div>
-            </div>
-
             <div id="cont-gps" class="hidden p-8 grid grid-cols-4 gap-8">
-                <div class="col-span-3 bg-black rounded-3xl border-2 border-blue-900/30 h-80 relative overflow-hidden">
-                    <canvas id="gpsMap" class="w-full h-full"></canvas>
+                <div class="col-span-3 bg-black rounded-3xl border-2 border-blue-900/30 h-96 relative overflow-hidden">
+                    <img src="https://img.freepik.com/vetores-premium/mapa-da-pista-de-corrida-com-os-pontos-de-partida-e-chegada_18591-51206.jpg" class="absolute inset-0 w-full h-full object-cover opacity-40">
+                    <canvas id="gpsMap" class="absolute inset-0 w-full h-full z-10"></canvas>
                 </div>
                 <div class="flex flex-col gap-4">
                     <div class="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
-                        <p class="text-[9px] text-gray-500 uppercase font-bold">Distance</p>
+                        <p class="text-[9px] text-gray-500">DISTÂNCIA</p>
                         <p id="g-dist" class="text-3xl text-blue-400 font-black">0.00 KM</p>
                     </div>
                     <div class="bg-slate-900/50 p-6 rounded-2xl border border-white/5">
-                        <p class="text-[9px] text-gray-500 uppercase font-bold">Top Speed</p>
+                        <p class="text-[9px] text-gray-500">TOP SPEED</p>
                         <p id="g-max" class="text-3xl text-yellow-500 font-black">0 KM/H</p>
                     </div>
                 </div>
             </div>
 
+            <div id="cont-history" class="hidden p-8">
+                <h2 class="text-blue-500 font-black mb-6 italic uppercase tracking-widest">Sessões Gravadas</h2>
+                <div id="historyList" class="space-y-4 max-h-[400px] overflow-y-auto pr-4">
+                    <p class="text-gray-500 italic">Nenhum registro encontrado...</p>
+                </div>
+            </div>
+
+            <div id="cont-charts" class="hidden p-8 h-80">
+                <canvas id="cSpeed"></canvas>
+            </div>
+
             <footer class="p-6 text-center border-t border-white/5">
-                <p class="text-yellow-500 font-bold mt-2 text-xs uppercase tracking-[0.6em]">Feito por um príncipe 👑</p>
+                <p class="text-yellow-500 font-bold text-xs uppercase tracking-[0.6em]">Feito por um príncipe 👑</p>
             </footer>
         </div>
     </div>
 
     <div id="saveModal" class="hidden fixed inset-0 bg-black/98 z-[600] flex items-center justify-center p-4">
         <div class="glass-panel p-10 w-full max-w-sm border-yellow-500">
-            <h2 class="text-yellow-500 font-black mb-6 italic uppercase text-center">Finalizar Sessão</h2>
+            <h2 class="text-yellow-500 font-black mb-6 italic text-center">FINALIZAR SESSÃO</h2>
             <div class="space-y-4">
-                <input type="text" id="fname" placeholder="Arquivo" class="w-full bg-black border border-slate-700 p-4 rounded-xl outline-none focus:border-blue-500 text-sm">
-                <input type="text" id="fpilot" placeholder="Piloto" class="w-full bg-black border border-slate-700 p-4 rounded-xl outline-none focus:border-blue-500 text-sm">
-                <input type="text" id="ftrack" placeholder="Pista" class="w-full bg-black border border-slate-700 p-4 rounded-xl outline-none focus:border-blue-500 text-sm">
+                <input type="text" id="fpilot" placeholder="PILOTO" class="w-full bg-black border border-slate-700 p-4 rounded-xl outline-none focus:border-blue-500 text-sm">
+                <input type="text" id="ftrack" placeholder="PISTA" class="w-full bg-black border border-slate-700 p-4 rounded-xl outline-none focus:border-blue-500 text-sm">
             </div>
             <div class="flex gap-4 mt-8">
-                <button onclick="discard()" class="flex-1 bg-red-900/30 text-red-500 border border-red-600 py-4 rounded-xl font-black text-xs uppercase">Descartar</button>
-                <button onclick="confirmS()" class="flex-1 bg-yellow-500 py-4 rounded-xl font-black text-black text-xs uppercase shadow-lg shadow-yellow-500/20">Salvar</button>
+                <button onclick="discard()" class="flex-1 bg-red-900/30 text-red-500 border border-red-600 py-4 rounded-xl font-black text-xs">DESCARTAR</button>
+                <button onclick="confirmS()" class="flex-1 bg-yellow-500 py-4 rounded-xl font-black text-black text-xs">SALVAR</button>
             </div>
         </div>
     </div>
 
     <script>
         const PASS = "depoisteconto";
-        let rpmG, speedG, chartS, chartR, chartT, isRec = false;
-        let dTotal = 0, vMax = 0, track = [];
-
-        function togglePass() { const p = document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password'; }
+        let rpmG, speedG, chartS, isRec = false;
+        let dTotal = 0, vMax = 0, track = [], historico = [];
 
         function fazerLogin() {
             if(document.getElementById('password').value === PASS) {
                 document.getElementById('loginWrapper').classList.add('hidden');
-                const s = document.getElementById('saboiaOverlay'); s.style.display = 'flex';
-                setTimeout(() => { s.style.display = 'none'; document.getElementById('telemetryWrapper').classList.remove('hidden'); initDash(); }, 1000);
+                document.getElementById('saboiaOverlay').style.display = 'flex';
+                setTimeout(() => { 
+                    document.getElementById('saboiaOverlay').style.display = 'none'; 
+                    document.getElementById('telemetryWrapper').classList.remove('hidden'); 
+                    initDash(); 
+                }, 1000);
             } else { alert("Senha incorreta"); }
         }
 
@@ -196,63 +177,134 @@
             rpmG = new RadialGauge({ ...common, renderTo: 'rpm-gauge', units: "RPM", maxValue: 5000, colorNeedle: "#f00" }).draw();
             speedG = new RadialGauge({ ...common, renderTo: 'speed-gauge', units: "KM/H", maxValue: 80, colorNeedle: "#00b4ff" }).draw();
 
-            const cConfig = (id, col) => new Chart(document.getElementById(id), {
-                type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: col, borderWidth: 3, tension: 0.3, fill: true, backgroundColor: col+'15' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1a1a1a' } } } }
+            chartS = new Chart(document.getElementById('cSpeed'), {
+                type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: '#00b4ff', borderWidth: 3, tension: 0.3, fill: true, backgroundColor: '#00b4ff15' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
-            chartS = cConfig('cSpeed', '#00b4ff'); chartR = cConfig('cRpm', '#ff0000'); chartT = cConfig('cTemp', '#ffcc00');
             setInterval(loop, 800);
         }
 
         function loop() {
-            // Geração de valores aleatórios (Onde você quer que os dados reais entrem depois)
             const r = Math.floor(Math.random()*3000 + 1000);
             const s = Math.floor(r/60 + Math.random()*5);
             const t = Math.floor(Math.random()*15 + 85);
             
-            rpmG.value = r; 
-            speedG.value = s;
+            rpmG.value = r; speedG.value = s;
             document.getElementById('v-motor').innerText = t+"°C";
             document.getElementById('v-cvt').innerText = (t-12)+"°C";
 
             if(isRec) {
-                const now = new Date().toLocaleTimeString();
-                [chartS, chartR, chartT].forEach((c, i) => {
-                    c.data.labels.push(now); 
-                    c.data.datasets[0].data.push(i==0 ? s : i==1 ? r : t);
-                    if(c.data.labels.length > 25) { c.data.labels.shift(); c.data.datasets[0].data.shift(); }
-                    c.update('none');
-                });
-                dTotal += s * 0.0001; if(s > vMax) vMax = s;
+                dTotal += s * 0.0001; 
+                if(s > vMax) vMax = s;
                 document.getElementById('g-dist').innerText = dTotal.toFixed(2) + " KM";
                 document.getElementById('g-max').innerText = vMax + " KM/H";
+                
+                // Atualiza Gráfico
+                const now = new Date().toLocaleTimeString();
+                chartS.data.labels.push(now);
+                chartS.data.datasets[0].data.push(s);
+                if(chartS.data.labels.length > 20) { chartS.data.labels.shift(); chartS.data.datasets[0].data.shift(); }
+                chartS.update('none');
+
                 drawMap();
             }
         }
 
         function drawMap() {
-            const c = document.getElementById('gpsMap'); const ctx = c.getContext('2d');
-            if(track.length==0) { c.width = c.offsetWidth; c.height = c.offsetHeight; track.push({x:50, y:c.height/2}); }
+            const c = document.getElementById('gpsMap'); 
+            const ctx = c.getContext('2d');
+            
+            if(track.length == 0) { 
+                c.width = c.offsetWidth; c.height = c.offsetHeight; 
+                track.push({x: 50, y: c.height - 50}); 
+            }
+            
             let last = track[track.length-1];
-            track.push({x: last.x + 6, y: last.y + (Math.random()*12-6)});
-            ctx.strokeStyle = '#00b4ff'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath();
-            ctx.moveTo(track[0].x, track[0].y); track.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
+            // Simulação de movimento em circuito (sobe e vira)
+            let nextX = last.x + (Math.random() * 15);
+            let nextY = last.y - (Math.random() * 10);
+
+            if(nextX > c.width) nextX = 50; 
+            if(nextY < 0) nextY = c.height - 50;
+
+            track.push({x: nextX, y: nextY});
+
+            ctx.clearRect(0, 0, c.width, c.height);
+            ctx.strokeStyle = '#0096ff'; 
+            ctx.lineWidth = 8; // Linha grossa igual à foto
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#0096ff';
+
+            ctx.beginPath();
+            ctx.moveTo(track[0].x, track[0].y);
+            track.forEach(p => ctx.lineTo(p.x, p.y));
+            ctx.stroke();
         }
 
         function switchTab(t) {
-            ['live', 'charts', 'gps'].forEach(id => { document.getElementById('cont-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.remove('tab-active'); });
-            document.getElementById('cont-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.add('tab-active');
+            ['live', 'charts', 'gps', 'history'].forEach(id => {
+                document.getElementById('cont-'+id).classList.add('hidden');
+                document.getElementById('tab-'+id).classList.remove('tab-active');
+            });
+            document.getElementById('cont-'+t).classList.remove('hidden');
+            document.getElementById('tab-'+t).classList.add('tab-active');
+            
+            if(t === 'gps') {
+                const c = document.getElementById('gpsMap');
+                c.width = c.offsetWidth; c.height = c.offsetHeight;
+            }
         }
 
-        function switchSubChart(sub) {
-            ['s', 'r', 't'].forEach(id => { document.getElementById('box-'+id).classList.add('hidden'); document.getElementById('sub-'+id).classList.remove('sub-active'); });
-            document.getElementById('box-'+sub).classList.remove('hidden'); document.getElementById('sub-'+sub).classList.add('sub-active');
+        function startRec() { 
+            isRec = true; 
+            dTotal = 0; vMax = 0; track = [];
+            const c = document.getElementById('gpsMap');
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0,0,c.width,c.height);
+            document.getElementById('btnStart').classList.add('hidden'); 
+            document.getElementById('btnStop').classList.remove('hidden'); 
         }
 
-        function startRec() { isRec = true; document.getElementById('btnStart').classList.add('hidden'); document.getElementById('btnStop').classList.remove('hidden'); dTotal=0; vMax=0; track=[]; }
         function openSave() { document.getElementById('saveModal').classList.remove('hidden'); }
-        function discard() { isRec = false; document.getElementById('saveModal').classList.add('hidden'); document.getElementById('btnStop').classList.add('hidden'); document.getElementById('btnStart').classList.remove('hidden'); }
-        function confirmS() { alert("REGISTRO SALVO!"); discard(); }
+
+        function confirmS() {
+            const sessao = {
+                piloto: document.getElementById('fpilot').value || "Piloto X",
+                pista: document.getElementById('ftrack').value || "Circuito",
+                dist: dTotal.toFixed(2),
+                vel: vMax,
+                data: new Date().toLocaleString()
+            };
+            historico.unshift(sessao); // Adiciona no topo
+            renderHistory();
+            discard();
+            alert("REGISTRO SALVO!");
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = historico.map(s => `
+                <div class="bg-black/40 p-4 rounded-2xl border border-white/10 flex justify-between items-center hover:border-blue-500 transition">
+                    <div>
+                        <p class="text-blue-400 font-black text-sm uppercase">${s.piloto} <span class="text-gray-600 text-[10px] ml-2">${s.data}</span></p>
+                        <p class="text-[10px] text-gray-400">Pista: ${s.pista}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white font-black text-xl">${s.dist} <span class="text-[10px] text-blue-500">KM</span></p>
+                        <p class="text-yellow-500 text-[10px] font-bold">MAX: ${s.vel} KM/H</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function discard() { 
+            isRec = false; 
+            document.getElementById('saveModal').classList.add('hidden'); 
+            document.getElementById('btnStop').classList.add('hidden'); 
+            document.getElementById('btnStart').classList.remove('hidden'); 
+        }
     </script>
 </body>
 </html>
