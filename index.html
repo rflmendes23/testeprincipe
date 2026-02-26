@@ -2,111 +2,114 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>FEI BAJA SAE - TELEMETRIA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FEI BAJA - TELEMETRIA</title>
     <script src="https://cdn.rawgit.com/Mikhus/canvas-gauges/master/gauge.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
-        body { background: #000510; color: white; font-family: 'Orbitron', sans-serif; }
-        .glass-panel { background: rgba(10, 20, 40, 0.95); border: 3px solid #0096ff; border-radius: 30px; padding: 20px; }
-        .hidden { display: none !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        body { background: #020617; color: white; font-family: 'Orbitron', sans-serif; }
+        .panel { background: rgba(15, 23, 42, 0.9); border: 2px solid #3b82f6; border-radius: 20px; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
     </style>
 </head>
-<body class="flex items-center justify-center min-height-screen p-10">
+<body class="min-h-screen flex items-center justify-center p-4">
 
-    <div id="loginWrapper" class="glass-panel p-10 text-center">
-        <h2 class="text-blue-400 mb-6 font-black uppercase">Painel de Acesso</h2>
-        <input type="password" id="password" placeholder="SENHA" class="bg-black border border-blue-500 p-4 rounded-xl text-center mb-6 block w-full">
-        <button onclick="fazerLogin()" class="bg-blue-600 px-10 py-4 rounded-xl font-black w-full">ENTRAR</button>
+    <div id="login" class="panel p-8 w-full max-w-md text-center">
+        <h2 class="text-2xl font-bold text-blue-400 mb-6">SISTEMA DE TELEMETRIA</h2>
+        <input type="password" id="pass" placeholder="SENHA" class="w-full bg-slate-900 border border-blue-500/50 p-3 rounded-lg mb-4 text-center outline-none focus:border-blue-400">
+        <button onclick="logar()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold transition">ENTRAR</button>
     </div>
 
-    <div id="telemetryWrapper" class="hidden w-full max-w-6xl">
-        <div class="glass-panel">
-            <h1 class="text-center text-3xl font-black text-blue-500 mb-8 italic">TELEMETRIA REAL-TIME</h1>
+    <div id="dash" class="hidden w-full max-w-5xl">
+        <div class="panel p-6">
+            <h1 class="text-3xl font-black text-center text-blue-500 mb-8 italic">FEI BAJA SAE</h1>
             
-            <div class="grid grid-cols-3 gap-8 p-4">
-                <div class="text-center"><canvas id="rpm-gauge"></canvas><p class="mt-2 text-red-500">RPM</p></div>
-                <div class="text-center"><canvas id="speed-gauge"></canvas><p class="mt-2 text-blue-400">KM/H</p></div>
-                <div class="flex flex-col gap-4">
-                    <div class="bg-black/50 p-4 rounded-xl border-l-4 border-red-600">
-                        <p class="text-xs text-gray-400">TEMPERATURA</p>
-                        <h3 id="v-motor" class="text-3xl font-black">0°C</h3>
-                    </div>
-                    <div class="bg-black/50 p-4 rounded-xl border-l-4 border-blue-500">
-                        <p class="text-xs text-gray-400">UMIDADE</p>
-                        <h3 id="v-umid" class="text-3xl font-black">0%</h3>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="flex flex-col items-center bg-slate-900/50 p-4 rounded-xl">
+                    <canvas id="gauge-rpm"></canvas>
+                    <p class="text-red-500 font-bold mt-2">RPM MOTOR</p>
                 </div>
-            </div>
 
-            <div class="p-4">
-                <button id="btnStart" onclick="isRec=true; this.classList.add('hidden')" class="bg-green-600 p-2 rounded w-full font-bold">INICIAR GRÁFICOS</button>
-                <div class="h-64 mt-4"><canvas id="cSpeed"></canvas></div>
+                <div class="flex flex-col items-center bg-slate-900/50 p-4 rounded-xl">
+                    <canvas id="gauge-speed"></canvas>
+                    <p class="text-blue-400 font-bold mt-2">VELOCIDADE KM/H</p>
+                </div>
+
+                <div class="flex flex-col gap-4 justify-center">
+                    <div class="bg-slate-900 border-l-4 border-orange-500 p-4 rounded-r-xl">
+                        <span class="text-xs text-slate-400">TEMPERATURA</span>
+                        <div id="txt-temp" class="text-3xl font-bold">-- °C</div>
+                    </div>
+                    <div class="bg-slate-900 border-l-4 border-cyan-500 p-4 rounded-r-xl">
+                        <span class="text-xs text-slate-400">UMIDADE</span>
+                        <div id="txt-umid" class="text-3xl font-bold">-- %</div>
+                    </div>
+                    <div id="status" class="text-[10px] text-center text-slate-500 animate-pulse">AGUARDANDO DADOS...</div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = "https://qgixmbqieiwrbdjkiovn.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnaXhtYnFpZWl3cmJkamtpb3ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTcwNzQsImV4cCI6MjA4NzY5MzA3NH0.bZ0CmeoRdQgNR0mGkVqPbFz-XrSYInknP5sfoflXvVA";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SB_URL = "https://qgixmbqieiwrbdjkiovn.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnaXhtYnFpZWl3cmJkamtpb3ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTcwNzQsImV4cCI6MjA4NzY5MzA3NH0.bZ0CmeoRdQgNR0mGkVqPbFz-XrSYInknP5sfoflXvVA";
+        const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-        let rpmG, speedG, chartS, isRec = false;
+        let gRpm, gSpeed;
 
-        function fazerLogin() {
-            if(document.getElementById('password').value === "depoisteconto") {
-                document.getElementById('loginWrapper').classList.add('hidden');
-                document.getElementById('telemetryWrapper').classList.remove('hidden');
-                initDash();
-            } else { alert("Senha errada"); }
+        function logar() {
+            if(document.getElementById('pass').value === "depoisteconto") {
+                document.getElementById('login').classList.add('hidden');
+                document.getElementById('dash').classList.remove('hidden');
+                initGauges();
+                setInterval(updateData, 1000);
+            } else { alert("Senha incorreta"); }
         }
 
-        function initDash() {
-            rpmG = new RadialGauge({ renderTo: 'rpm-gauge', width: 200, height: 200, maxValue: 5000, units: "RPM" }).draw();
-            speedG = new RadialGauge({ renderTo: 'speed-gauge', width: 200, height: 200, maxValue: 100, units: "KM/H" }).draw();
-            
-            chartS = new Chart(document.getElementById('cSpeed'), {
-                type: 'line',
-                data: { labels: [], datasets: [{ label: 'Velocidade', data: [], borderColor: '#0096ff' }] },
-                options: { scales: { x: { display: true, ticks: { color: '#fff' } } } }
-            });
+        function initGauges() {
+            gRpm = new RadialGauge({
+                renderTo: 'gauge-rpm', width: 220, height: 220, units: "RPM",
+                maxValue: 5000, colorPlate: "#0f172a", colorNumbers: "#fff",
+                borderShadowWidth: 0, borders: false, needleType: "arrow",
+                needleWidth: 3, animationDuration: 500
+            }).draw();
 
-            setInterval(getData, 1000);
+            gSpeed = new RadialGauge({
+                renderTo: 'gauge-speed', width: 220, height: 220, units: "KM/H",
+                maxValue: 100, colorPlate: "#0f172a", colorNumbers: "#fff",
+                borderShadowWidth: 0, borders: false, needleType: "arrow",
+                needleWidth: 3, animationDuration: 500
+            }).draw();
         }
 
-        async function getData() {
-            const { data, error } = await _supabase
-                .from('telemetria')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(1);
+        async function updateData() {
+            try {
+                const { data, error } = await _sb
+                    .from('telemetria')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(1);
 
-            if (error) console.error("Erro no Supabase:", error);
-            
-            if (data && data.length > 0) {
-                const b = data[0];
-                console.log("Dados recebidos:", b); // Isso vai aparecer no F12
+                if (error) throw error;
 
-                // Se os seus nomes de coluna forem diferentes, mude aqui:
-                const r = b.rpm || 0;
-                const s = b.velocidade || 0;
-                const t = b.temperatura || 0;
-                const u = b.umidade || 0;
+                if (data && data.length > 0) {
+                    const row = data[0];
+                    // Busca flexível: tenta minúsculo ou maiúsculo
+                    const rpm = row.rpm || row.RPM || 0;
+                    const vel = row.velocidade || row.VELOCIDADE || 0;
+                    const tmp = row.temperatura || row.TEMPERATURA || 0;
+                    const umd = row.umidade || row.UMIDADE || 0;
 
-                rpmG.value = r;
-                speedG.value = s;
-                document.getElementById('v-motor').innerText = t + "°C";
-                document.getElementById('v-umid').innerText = u + "%";
-
-                if(isRec) {
-                    const time = new Date().toLocaleTimeString();
-                    chartS.data.labels.push(time);
-                    chartS.data.datasets[0].data.push(s);
-                    if(chartS.data.labels.length > 15) { chartS.data.labels.shift(); chartS.data.datasets[0].data.shift(); }
-                    chartS.update();
+                    gRpm.value = rpm;
+                    gSpeed.value = vel;
+                    document.getElementById('txt-temp').innerText = tmp + " °C";
+                    document.getElementById('txt-umid').innerText = umd + " %";
+                    document.getElementById('status').innerText = "LIVE: " + new Date().toLocaleTimeString();
                 }
+            } catch (err) {
+                console.error("Erro ao ler banco:", err.message);
+                document.getElementById('status').innerText = "ERRO DE CONEXÃO";
             }
         }
     </script>
