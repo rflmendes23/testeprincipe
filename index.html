@@ -2,236 +2,216 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FEI BAJA SAE - TELEMETRIA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FEI BAJA SAE - TELEMETRIA PRO</title>
     <script src="https://cdn.rawgit.com/Mikhus/canvas-gauges/master/gauge.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background-color: #010816; color: white; font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; overflow-x: hidden; }
-        .hidden { display: none !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;400;700;900&display=swap');
 
-        /* ====== LOGIN ====== */
-        #loginWrapper {
-            background: linear-gradient(135deg, #020c1b 0%, #0a1628 25%, #0d1f3c 50%, #0a1628 75%, #020c1b 100%);
-            display: flex; align-items: center; justify-content: center;
-            min-height: 100vh; width: 100vw; position: fixed;
-            top: 0; left: 0; z-index: 100; overflow: hidden;
+        :root {
+            --azul-baja: #2051E5;
+            --ouro-baja: #ffcc00;
         }
 
-        #loginWrapper::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.15), transparent),
-                        radial-gradient(2px 2px at 40% 70%, rgba(255,255,255,0.1), transparent),
-                        radial-gradient(2px 2px at 60% 20%, rgba(255,255,255,0.12), transparent);
-            animation: twinkle 4s ease-in-out infinite alternate; pointer-events: none;
+        body { 
+            background: #020617; 
+            color: white; 
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
         }
 
-        @keyframes twinkle { 0% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        .login-card {
-            background: linear-gradient(145deg, rgba(15, 25, 50, 0.95), rgba(10, 18, 40, 0.98));
-            border-radius: 24px; padding: 40px 30px 30px; width: 90%; max-width: 400px;
-            text-align: center; box-shadow: 0 25px 80px rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,255,0.08); position: relative; z-index: 1;
+        /* Glassmorphism Effect */
+        .glass {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
         }
 
-        .capy-circle {
-            width: 130px; height: 130px; background: linear-gradient(135deg, #1a3a8a, #2051E5);
-            border-radius: 50%; margin: 0 auto 15px; border: 3px solid rgba(255,204,0,0.5);
-            overflow: hidden; display: flex; align-items: center; justify-content: center;
-            animation: floatCapy 3s ease-in-out infinite;
-        }
-        .capy-circle img { width: 100%; height: 100%; object-fit: cover; }
-
-        @keyframes floatCapy { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-
-        .star-red { color: #ff2222; font-size: 1.8rem; margin: 0 3px; text-shadow: 0 0 10px rgba(255,0,0,0.8); }
-        .star-yellow { color: #ffcc00; font-size: 1.4rem; margin: 0 2px; text-shadow: 0 0 10px rgba(255,204,0,0.8); }
-
-        .input-pass {
-            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.05); color: #fff; font-size: 1.1rem; text-align: center;
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            canvas { width: 220px !important; height: 220px !important; }
+            .gauge-container { flex-direction: column; }
         }
 
-        .btn-login {
-            width: 100%; background: linear-gradient(135deg, #1a3a8a, #2051E5); color: white;
-            padding: 14px; border-radius: 12px; font-weight: 800; margin-top: 10px; cursor: pointer;
+        /* Animations */
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(32, 81, 229, 0.4); }
+            100% { box-shadow: 0 0 30px rgba(32, 81, 229, 0.8); }
         }
 
-        /* ====== TELEMETRY ====== */
-        #telemetryWrapper { min-height: 100vh; background: linear-gradient(180deg, #020c1b 0%, #0a1628 40%, #0d1f3c 100%); }
-        .telemetry-container { padding: 2rem; max-width: 1300px; margin: 0 auto; }
-        .glass-panel { background: rgba(15, 20, 30, 0.9); border: 1px solid rgba(255,255,255,0.06); border-radius: 1.5rem; }
-        .thermometer-track { width: 28px; height: 180px; background: #111; border-radius: 14px; position: relative; overflow: hidden; border: 2px solid #333; }
-        .thermometer-fill { position: absolute; bottom: 0; width: 100%; transition: height 0.5s ease; }
+        .capy-glow {
+            animation: float 3s ease-in-out infinite, pulse-glow 2s ease-in-out infinite alternate;
+        }
 
-        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background: rgba(10,15,25,0.95); border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .top-bar-btn { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .star-red { color: #ff2222; text-shadow: 0 0 10px #ff2222; animation: twinkle 1.5s infinite; }
+        .star-yellow { color: #ffcc00; text-shadow: 0 0 10px #ffcc00; animation: twinkle 2s infinite; }
+        
+        @keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .btn-modern {
+            background: linear-gradient(135deg, #1e40af, #2563eb);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-modern:hover { transform: translateY(-2px); filter: brightness(1.2); }
+
+        .thermometer-track {
+            width: 14px; height: 120px; background: #0f172a; border-radius: 20px;
+            position: relative; overflow: hidden; border: 1px solid #334155;
+        }
     </style>
 </head>
-<body>
+<body class="min-h-screen">
 
-    <div id="loginWrapper">
-        <div class="flex flex-col items-center" style="position: relative; z-index: 2;">
-            <div class="flex mb-4">
-                <span class="star-red">&#9733;</span><span class="star-red">&#9733;</span><span class="star-red">&#9733;</span><span class="star-red">&#9733;</span>
+    <div id="loginWrapper" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950 p-4">
+        <div class="glass p-8 rounded-[2rem] w-full max-w-md text-center border-t border-white/20">
+            <div class="flex justify-center gap-1 mb-6">
+                <span class="star-red text-2xl">★</span><span class="star-red text-2xl">★</span><span class="star-red text-2xl">★</span>
             </div>
-            <div class="login-card">
-                <div class="capy-circle"><img src="https://media.tenor.com/w3VAxiGVd_MAAAAM/kapibara-%D0%BA%20%D0%B0%D0%BF%D0%B8%D0%B1%D0%B0%D1%80%D0%B0.gif"></div>
-                <h1 class="text-4xl font-black italic mb-1 text-white">eletrica</h1>
-                <div class="text-xs text-blue-300 mb-4 tracking-widest uppercase opacity-50">FEI BAJA SAE</div>
-                <div class="flex justify-center flex-wrap mb-5">
-                    <span class="star-yellow">&#9733;</span><span class="star-yellow">&#9733;</span><span class="star-yellow">&#9733;</span><span class="star-yellow">&#9733;</span><span class="star-yellow">&#9733;</span>
-                </div>
-                <input type="password" id="password" placeholder="SENHA" class="input-pass" onkeydown="if(event.key==='Enter')validaLogin()">
-                <button onclick="validaLogin()" class="btn-login">Entrar</button>
-                <div class="text-[10px] mt-4 opacity-40 italic">feito por um principe 👑</div>
+            
+            <div class="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden border-4 border-blue-600 capy-glow">
+                <img src="https://media.tenor.com/w3VAxiGVd_MAAAAM/kapibara-%D0%BA%20%D0%B0%D0%BF%D0%B8%D0%B1%D0%B0%D1%80%D0%B0.gif" class="w-full h-full object-cover">
+            </div>
+
+            <h1 class="text-5xl font-black italic tracking-tighter mb-2 font-[Orbitron] text-blue-500">ELETRICA</h1>
+            <p class="text-xs tracking-[0.3em] text-slate-400 mb-8 font-bold">FEI BAJA SAE</p>
+
+            <div class="space-y-4">
+                <input type="password" id="password" placeholder="CÓDIGO DE ACESSO" 
+                    class="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-xl text-center font-bold tracking-widest outline-none focus:border-blue-500 transition">
+                <button onclick="validaLogin()" class="btn-modern w-full p-4 rounded-xl font-black tracking-widest">ENTRAR NO SISTEMA</button>
+            </div>
+
+            <div class="mt-8 flex items-center justify-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest">
+                <span>feito por um principe</span>
+                <span class="text-yellow-500 text-sm">👑</span>
             </div>
         </div>
     </div>
 
-    <div id="telemetryWrapper" class="hidden">
-        <div class="top-bar">
-            <button onclick="fazerLogout()" class="top-bar-btn">SAIR</button>
-            <div class="text-[10px] opacity-30 italic">feito por um principe 👑</div>
-        </div>
-        <div class="telemetry-container">
-            <header class="flex flex-col items-center mb-8 text-center">
-                <h1 class="text-3xl md:text-5xl font-black uppercase mb-4">EQUIPE FEI BAJA SAE</h1>
-                <div class="flex gap-3">
-                    <button id="btnStart" onclick="iniciarGravacao()" class="bg-green-600 px-6 py-2 rounded-xl font-bold">● GRAVAR</button>
-                    <button id="btnStop" onclick="abrirModalSalvar()" class="bg-red-600 px-6 py-2 rounded-xl font-bold hidden">■ PARAR</button>
-                    <button onclick="irParaHistorico()" class="bg-blue-600 px-6 py-2 rounded-xl font-bold">HISTORICO</button>
-                </div>
-            </header>
+    <div id="telemetryWrapper" class="hidden opacity-0 transition-opacity duration-700">
+        <nav class="p-6 flex justify-between items-center border-b border-white/5 bg-slate-950/50 backdrop-blur-md sticky top-0 z-50">
+            <div class="flex items-center gap-4">
+                <div class="h-8 w-1 bg-blue-600 rounded-full"></div>
+                <h2 class="font-[Orbitron] font-black italic text-xl tracking-tighter">FEI BAJA <span class="text-blue-500">LIVE</span></h2>
+            </div>
+            <button onclick="location.reload()" class="text-xs font-bold text-slate-400 border border-slate-700 px-4 py-2 rounded-lg hover:bg-white/5">LOGOUT</button>
+        </nav>
 
-            <main class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div class="lg:col-span-9 glass-panel p-10 flex flex-col md:flex-row items-center justify-around gap-8">
-                    <div class="text-center">
-                        <div class="mb-2 text-red-500 font-black text-sm uppercase">Engine RPM</div>
+        <main class="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6 glass p-6 rounded-3xl">
+                <div class="flex gap-2">
+                    <span class="star-yellow">★</span><span class="star-yellow">★</span><span class="star-yellow">★</span>
+                    <span class="font-bold text-sm tracking-widest text-slate-300">TELEMETRY ACTIVE</span>
+                </div>
+                <div class="flex gap-3 w-full md:w-auto">
+                    <button id="btnStart" onclick="toggleGravacao(true)" class="flex-1 md:px-8 py-3 bg-green-500/10 text-green-500 border border-green-500/50 rounded-xl font-black text-xs hover:bg-green-500 hover:text-white transition">REC</button>
+                    <button id="btnStop" onclick="toggleGravacao(false)" class="flex-1 md:px-8 py-3 bg-red-500 text-white rounded-xl font-black text-xs hidden animate-pulse">STOP</button>
+                    <button class="flex-1 md:px-8 py-3 glass rounded-xl font-black text-xs">HISTORY</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-9 glass rounded-[2.5rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-around gap-12">
+                    <div class="relative group">
+                        <div class="absolute -inset-4 bg-red-600/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition"></div>
                         <canvas id="rpm-gauge"></canvas>
+                        <p class="text-center mt-4 font-[Orbitron] text-red-500 font-black text-sm tracking-widest">ENGINE RPM</p>
                     </div>
-                    <div class="text-center">
-                        <div class="mb-2 text-yellow-500 font-black text-sm uppercase">Speed KM/H</div>
+                    <div class="relative group">
+                        <div class="absolute -inset-4 bg-yellow-600/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition"></div>
                         <canvas id="speed-gauge"></canvas>
+                        <p class="text-center mt-4 font-[Orbitron] text-yellow-500 font-black text-sm tracking-widest">VEHICLE SPEED</p>
                     </div>
                 </div>
-                <div class="lg:col-span-3 glass-panel p-6 flex flex-col justify-around items-center gap-6">
-                    <div class="text-center">
-                        <div class="text-xs font-bold text-gray-400 mb-2">MOTOR</div>
-                        <div class="thermometer-track mx-auto"><div id="bar-motor" class="thermometer-fill bg-red-600"></div></div>
-                        <div id="txt-motor" class="mt-2 font-mono text-xl font-bold">0°C</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-xs font-bold text-gray-400 mb-2">UMIDADE</div>
-                        <div class="thermometer-track mx-auto"><div id="bar-humi" class="thermometer-fill bg-blue-500"></div></div>
-                        <div id="txt-humi" class="mt-2 font-mono text-xl font-bold">0%</div>
-                    </div>
-                </div>
-            </main>
-        </div>
-    </div>
 
-    <div id="saveModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[500]">
-        <div class="bg-slate-900 p-8 rounded-2xl border border-white/10 w-80">
-            <h2 class="text-white font-bold mb-4">Salvar Gravacao</h2>
-            <input id="inputNomeGravacao" type="text" placeholder="Nome da Sessão" class="w-full p-2 rounded bg-white/5 text-white mb-4">
-            <div class="flex gap-2">
-                <button onclick="document.getElementById('saveModal').classList.add('hidden')" class="flex-1 bg-gray-600 p-2 rounded">CANCELAR</button>
-                <button onclick="confirmarSalvar()" class="flex-1 bg-green-600 p-2 rounded">SALVAR</button>
+                <div class="lg:col-span-3 grid grid-cols-2 lg:grid-cols-1 gap-6">
+                    <div class="glass rounded-[2rem] p-6 flex flex-col items-center justify-center gap-4">
+                        <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase">Motor Temp</span>
+                        <div class="thermometer-track"><div id="bar-motor" class="absolute bottom-0 w-full bg-red-600 transition-all duration-500" style="height: 0%"></div></div>
+                        <span id="txt-motor" class="font-[Orbitron] text-xl font-black">0°C</span>
+                    </div>
+                    <div class="glass rounded-[2rem] p-6 flex flex-col items-center justify-center gap-4">
+                        <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase">CVT Temp</span>
+                        <div class="thermometer-track"><div id="bar-cvt" class="absolute bottom-0 w-full bg-orange-500 transition-all duration-500" style="height: 0%"></div></div>
+                        <span id="txt-cvt" class="font-[Orbitron] text-xl font-black">0°C</span>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-
-    <div id="historicoWrapper" class="hidden min-h-screen p-8">
-        <button onclick="voltarTelemetria()" class="bg-gray-700 px-4 py-2 rounded mb-6">← VOLTAR</button>
-        <div id="listaCorridas" class="space-y-3 max-w-xl mx-auto"></div>
+        </main>
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO ---
         const SENHA_CORRETA = "depoisteconto";
-        const SUPABASE_URL = "https://yinnyqeljogrzxnxftet.supabase.co/rest/v1/telemetria";
-        const SUPABASE_KEY = "COLE_AQUI_SUA_ANON_PUBLIC_KEY"; // Pegue no Supabase > Settings > API
-
-        let gravando = false;
-        let dadosCorrente = [];
         let rpmG, speedG;
 
         function validaLogin() {
             if (document.getElementById('password').value === SENHA_CORRETA) {
                 document.getElementById('loginWrapper').classList.add('hidden');
                 document.getElementById('telemetryWrapper').classList.remove('hidden');
+                document.getElementById('telemetryWrapper').classList.add('opacity-100');
                 initSistemas();
-            } else { alert("Senha Incorreta!"); }
+            } else {
+                alert("ACESSO NEGADO, PRÍNCIPE!");
+            }
         }
-
-        function fazerLogout() { location.reload(); }
 
         function initSistemas() {
-            if (rpmG) return;
-            rpmG = new RadialGauge({ renderTo: 'rpm-gauge', width: 280, height: 280, units: "RPM", minValue: 0, maxValue: 5000, colorPlate: "#0a0f1a", colorNumbers: "#ddd", colorNeedle: "#ff2222", valueBox: true, borders: false }).draw();
-            speedG = new RadialGauge({ renderTo: 'speed-gauge', width: 280, height: 280, units: "km/h", minValue: 0, maxValue: 100, colorPlate: "#0a0f1a", colorNumbers: "#ddd", colorNeedle: "#ffcc00", valueBox: true, borders: false }).draw();
-            setInterval(atualizarDados, 2000);
+            // RPM GAUGE
+            rpmG = new RadialGauge({
+                renderTo: 'rpm-gauge', width: 300, height: 300, units: "RPM", minValue: 0, maxValue: 5000,
+                colorPlate: "transparent", colorNumbers: "#94a3b8", colorNeedle: "#ff2222",
+                colorNeedleEnd: "#ff2222", needleType: "arrow", needleWidth: 3,
+                majorTicks: ["0","1k","2k","3k","4k","5k"], fontNumbers: "Orbitron",
+                highlights: [{ from: 4000, to: 5000, color: "rgba(255,0,0,0.3)" }],
+                valueBox: true, colorValueBoxBackground: "transparent", fontValue: "Orbitron", colorValueText: "#fff",
+                borderShadowWidth: 0, borders: false, needleCircleSize: 7, colorNeedleCircleOuter: "#ff2222"
+            }).draw();
+
+            // SPEED GAUGE
+            speedG = new RadialGauge({
+                renderTo: 'speed-gauge', width: 300, height: 300, units: "KM/H", minValue: 0, maxValue: 80,
+                colorPlate: "transparent", colorNumbers: "#94a3b8", colorNeedle: "#ffcc00",
+                colorNeedleEnd: "#ffcc00", needleType: "arrow", needleWidth: 3,
+                majorTicks: ["0","20","40","60","80"], fontNumbers: "Orbitron",
+                highlights: [{ from: 60, to: 80, color: "rgba(255,204,0,0.2)" }],
+                valueBox: true, colorValueBoxBackground: "transparent", fontValue: "Orbitron", colorValueText: "#fff",
+                borderShadowWidth: 0, borders: false, needleCircleSize: 7, colorNeedleCircleOuter: "#ffcc00"
+            }).draw();
+
+            // Loop de Simulação (Números Aleatórios)
+            setInterval(simularCarro, 800);
         }
 
-        async function atualizarDados() {
-            try {
-                const response = await fetch(`${SUPABASE_URL}?order=created_at.desc&limit=1`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-                });
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    const u = data[0];
-                    rpmG.value = u.rpm;
-                    speedG.value = u.velocidade;
-                    document.getElementById('bar-motor').style.height = u.temperatura + '%';
-                    document.getElementById('txt-motor').innerText = u.temperatura + '°C';
-                    document.getElementById('bar-humi').style.height = u.umidade + '%';
-                    document.getElementById('txt-humi').innerText = u.umidade + '%';
-                    if (gravando) dadosCorrente.push({ hora: new Date().toLocaleTimeString(), rpm: u.rpm, vel: u.velocidade });
-                }
-            } catch (e) { console.error(e); }
+        function simularCarro() {
+            // Gera valores randômicos realistas
+            const randomRPM = Math.floor(Math.random() * (4200 - 1200) + 1200);
+            const randomSpeed = Math.floor((randomRPM / 50) + (Math.random() * 5));
+            const randomMotor = Math.floor(Math.random() * (110 - 85) + 85);
+            const randomCVT = Math.floor(Math.random() * (90 - 40) + 40);
+
+            // Atualiza Gauges
+            rpmG.value = randomRPM;
+            speedG.value = randomSpeed;
+
+            // Atualiza Barras
+            document.getElementById('bar-motor').style.height = (randomMotor/1.5) + '%';
+            document.getElementById('txt-motor').innerText = randomMotor + '°C';
+            
+            document.getElementById('bar-cvt').style.height = (randomCVT) + '%';
+            document.getElementById('txt-cvt').innerText = randomCVT + '°C';
         }
 
-        function iniciarGravacao() {
-            gravando = true; dadosCorrente = [];
-            document.getElementById('btnStart').classList.add('hidden');
-            document.getElementById('btnStop').classList.remove('hidden');
-        }
-
-        function abrirModalSalvar() {
-            gravando = false;
-            document.getElementById('saveModal').classList.remove('hidden');
-        }
-
-        function confirmarSalvar() {
-            const nome = document.getElementById('inputNomeGravacao').value || "Sessão";
-            const hist = JSON.parse(localStorage.getItem('baja_history') || '[]');
-            hist.push({ nome, data: new Date().toLocaleString(), dados: dadosCorrente });
-            localStorage.setItem('baja_history', JSON.stringify(hist));
-            document.getElementById('saveModal').classList.add('hidden');
-            document.getElementById('btnStop').classList.add('hidden');
-            document.getElementById('btnStart').classList.remove('hidden');
-            alert("Salvo!");
-        }
-
-        function irParaHistorico() {
-            document.getElementById('telemetryWrapper').classList.add('hidden');
-            document.getElementById('historicoWrapper').classList.remove('hidden');
-            const h = JSON.parse(localStorage.getItem('baja_history') || '[]');
-            document.getElementById('listaCorridas').innerHTML = h.reverse().map(c => `
-                <div class="glass-panel p-4 flex justify-between items-center">
-                    <div><div class="font-bold">${c.nome}</div><div class="text-xs text-gray-500">${c.data}</div></div>
-                    <div class="text-blue-400 font-bold">${c.dados.length} pts</div>
-                </div>
-            `).join('');
-        }
-
-        function voltarTelemetria() {
-            document.getElementById('historicoWrapper').classList.add('hidden');
-            document.getElementById('telemetryWrapper').classList.remove('hidden');
+        function toggleGravacao(status) {
+            document.getElementById('btnStart').classList.toggle('hidden', status);
+            document.getElementById('btnStop').classList.toggle('hidden', !status);
         }
     </script>
 </body>
